@@ -1,0 +1,422 @@
+// File: /GuitarTutorApp/GuitarTutorApp.swift
+import SwiftUI
+
+@main
+struct GuitarTutorApp: App {
+    @StateObject private var store = AppStore.sample()
+    var body: some Scene {
+        WindowGroup {
+            NavigationStack {
+                HomeView()
+            }
+            .environmentObject(store)
+        }
+    }
+}
+
+// File: /GuitarTutorApp/Models.swift
+import Foundation
+
+/// Represents a single chord lesson.
+struct Chord: Identifiable, Codable, Equatable {
+    let id: UUID
+    let name: String
+    let type: String
+    let imageName: String
+    let tips: String
+    let difficulty: Difficulty
+
+    init(id: UUID = UUID(), name: String, type: String, imageName: String, tips: String, difficulty: Difficulty) {
+        self.id = id
+        self.name = name
+        self.type = type
+        self.imageName = imageName
+        self.tips = tips
+        self.difficulty = difficulty
+    }
+}
+
+enum Difficulty: String, Codable, CaseIterable, Comparable {
+    case beginner
+    case intermediate
+    case advanced
+
+    var displayName: String {
+        switch self {
+        case .beginner: return "Beginner"
+        case .intermediate: return "Intermediate"
+        case .advanced: return "Advanced"
+        }
+    }
+
+    // Allows sorting easily
+    static func < (lhs: Difficulty, rhs: Difficulty) -> Bool {
+        let order: [Difficulty] = [.beginner, .intermediate, .advanced]
+        return order.firstIndex(of: lhs)! < order.firstIndex(of: rhs)!
+    }
+}
+
+// File: /GuitarTutorApp/AppStore.swift
+import Foundation
+import SwiftUI
+
+final class AppStore: ObservableObject {
+    @Published var lessons: [Chord] = []
+    @Published private(set) var completedIDs: Set<UUID> = []
+
+    private let saveKey = "com.guitartutor.completed.v1"
+
+    init(lessons: [Chord]) {
+        self.lessons = lessons
+        load()
+    }
+
+    func isCompleted(_ chord: Chord) -> Bool {
+        completedIDs.contains(chord.id)
+    }
+
+    func markCompleted(_ chord: Chord) {
+        completedIDs.insert(chord.id)
+        save()
+    }
+
+    func unmarkCompleted(_ chord: Chord) {
+        completedIDs.remove(chord.id)
+        save()
+    }
+
+    private func save() {
+        let arr = completedIDs.map { $0.uuidString }
+        UserDefaults.standard.set(arr, forKey: saveKey)
+    }
+
+    private func load() {
+        guard let arr = UserDefaults.standard.stringArray(forKey: saveKey) else { return }
+        completedIDs = Set(arr.compactMap { UUID(uuidString: $0) })
+    }
+
+    // MARK: - Sample factory
+    static func sample() -> AppStore {
+        AppStore(lessons: SampleData.lessons)
+    }
+}
+
+// File: /GuitarTutorApp/SampleData.swift
+import Foundation
+
+enum SampleData {
+    static let lessons: [Chord] = [
+        Chord(name: "C Major", type: "Major", imageName: "C_major", tips: "Curve your index finger, press firmly behind the fret. Strum all strings except low E.", difficulty: .beginner),
+        Chord(name: "G Major", type: "Major", imageName: "G_major", tips: "Place ring finger on low E 3rd fret. Keep fingers arched.", difficulty: .beginner),
+        Chord(name: "D Major", type: "Major", imageName: "D_major", tips: "Only strum the bottom four strings. Keep the fingers close to frets.", difficulty: .beginner),
+        Chord(name: "E Minor", type: "Minor", imageName: "E_minor", tips: "Two fingers on 2nd fret — great first minor chord.", difficulty: .beginner),
+        Chord(name: "A Minor", type: "Minor", imageName: "A_minor", tips: "Relax the wrist and keep fingertips vertical.", difficulty: .intermediate),
+        Chord(name: "F Major (partial barre)", type: "Barre/Major", imageName: "F_major", tips: "Start with partial barre and build finger strength.", difficulty: .intermediate),
+        Chord(name: "B Minor (barre)", type: "Minor (barre)", imageName: "B_minor", tips: "Full barre on 2nd fret + shape of A minor.", difficulty: .advanced),
+        Chord(name: "Cmaj7", type: "Major 7th", imageName: "Cmaj7", tips: "A subtle, jazzier voicing; let the high E ring.", difficulty: .advanced)
+    ]
+}
+
+// File: /GuitarTutorApp/Views/HomeView.swift
+import SwiftUI
+
+struct HomeView: View {
+    @EnvironmentObject var store: AppStore
+    var body: some View {
+        VStack(spacing: 0) {
+            ProgressHeader()
+                .padding(.bottom, 6)
+            List {
+                ForEach(Difficulty.allCases.sorted(), id: \.self) { level in
+                    let items = lessons(for: level)
+                    if !items.isEmpty {
+                        Section(header: Text(level.displayName).font(.headline)) {
+                            ForEach(items) { chord in
+                                NavigationLink(value: chord) {
+                                    LessonRow(chord: chord)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+        }
+        .navigationTitle("GuitarTutor")
+        .navigationDestination(for: Chord.self) { chord in
+            LessonView(chord: chord)
+        }
+    }
+
+    private func lessons(for difficulty: Difficulty) -> [Chord] {
+        store.lessons.filter { $0.difficulty == difficulty }
+    }
+}
+
+struct ProgressHeader: View {
+    @EnvironmentObject var store: AppStore
+    var body: some View {
+        let completed = store.lessons.filter { store.isCompleted($0) }.count
+        let total = store.lessons.count
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Progress").font(.headline)
+                    Text("\(completed) of \(total) lessons completed").font(.subheadline).foregroundColor(.secondary)
+                }
+                Spacer()
+                Text("\(Int(total == 0 ? 0 : Double(completed) / Double(total) * 100))%")
+                    .font(.title3).bold()
+            }
+            ProgressView(value: total == 0 ? 0 : Double(completed) / Double(total))
+                .scaleEffect(x: 1, y: 1.5, anchor: .center)
+        }
+        .padding(.horizontal)
+        .padding(.top)
+        .background(Color(UIColor.systemBackground))
+    }
+}
+
+struct LessonRow: View {
+    @EnvironmentObject var store: AppStore
+    let chord: Chord
+    var body: some View {
+        HStack {
+            Image(chord.imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 56, height: 56)
+                .clipped()
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(UIColor.separator)))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(chord.name).font(.headline)
+                Text(chord.type).font(.caption).foregroundColor(.secondary)
+            }
+            Spacer()
+            if store.isCompleted(chord) {
+                Label("Done", systemImage: "checkmark.circle.fill")
+                    .labelStyle(.titleAndIcon)
+                    .foregroundColor(.green)
+            } else {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 6)
+    }
+}
+
+// File: /GuitarTutorApp/Views/LessonView.swift
+import SwiftUI
+
+struct LessonView: View {
+    @EnvironmentObject var store: AppStore
+    let chord: Chord
+    @State private var presentQuiz = false
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Image(chord.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 320)
+                    .cornerRadius(12)
+                    .shadow(radius: 4)
+                    .padding(.horizontal)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(chord.name).font(.largeTitle).bold()
+                    Text(chord.type).font(.title3).foregroundColor(.secondary)
+                    Divider()
+                    Text("How to play").font(.headline)
+                    Text(chord.tips)
+                    spacer(min: 8)
+                    Text("Practice steps").font(.headline)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("• Place fingers exactly on the frets; press firmly.")
+                        Text("• Pluck each string slowly to ensure it rings clearly.")
+                        Text("• Build from partial to full shapes (for barre chords).")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                }
+                .padding(.horizontal)
+
+                Button(action: { presentQuiz = true }) {
+                    Text("Take Quiz")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding(.vertical)
+        }
+        .navigationTitle(chord.name)
+        .sheet(isPresented: $presentQuiz) {
+            QuizView(target: chord)
+                .environmentObject(store)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if store.isCompleted(chord) {
+                    Image(systemName: "checkmark.seal.fill").foregroundColor(.green)
+                }
+            }
+        }
+    }
+
+    // tiny helper used above to reduce comment noise
+    @ViewBuilder private func spacer(min: CGFloat) -> some View { Spacer().frame(height: min) }
+}
+
+// File: /GuitarTutorApp/Views/QuizView.swift
+import SwiftUI
+
+struct QuizView: View {
+    @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let target: Chord
+
+    @State private var options: [Chord] = []
+    @State private var selectedID: UUID?
+    @State private var showResult = false
+    @State private var isCorrect = false
+    @State private var feedback = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("Which chord is shown?")
+                    .font(.title2).bold()
+                    .padding(.top)
+
+                Image(target.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 220)
+                    .cornerRadius(8)
+                    .shadow(radius: 3)
+
+                VStack(spacing: 12) {
+                    ForEach(options) { opt in
+                        Button {
+                            guard !showResult else { return }
+                            selectedID = opt.id
+                            evaluate(selected: opt)
+                        } label: {
+                            HStack {
+                                Text(opt.name).bold()
+                                Spacer()
+                                if selectedID == opt.id && showResult {
+                                    Image(systemName: isCorrect && opt.id == target.id ? "checkmark.seal.fill" : "xmark.circle.fill")
+                                        .foregroundColor(isCorrect && opt.id == target.id ? .green : .red)
+                                } else if selectedID == opt.id {
+                                    Image(systemName: "checkmark.circle")
+                                }
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(8)
+                        }
+                        .disabled(showResult)
+                    }
+                }
+                .padding(.horizontal)
+
+                if showResult {
+                    Text(feedback)
+                        .font(.headline)
+                        .foregroundColor(isCorrect ? .green : .red)
+                        .padding(.top)
+
+                    if isCorrect {
+                        Button("Mark Lesson Complete & Close") {
+                            store.markCompleted(target)
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top)
+                    } else {
+                        HStack(spacing: 12) {
+                            Button("Try Again") { reset() }
+                                .buttonStyle(.bordered)
+                            Button("Show Answer & Close") {
+                                // Mark not completed, show correct then close
+                                dismiss()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding(.top)
+                    }
+                }
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Quiz")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Close") { dismiss() }
+                }
+            }
+            .onAppear { buildOptions() }
+        }
+    }
+
+    private func buildOptions() {
+        // Prefer distractors of same difficulty, fallback to any other lessons
+        var pool = store.lessons.filter { $0.id != target.id && $0.difficulty == target.difficulty }
+        if pool.count < 3 {
+            pool = store.lessons.filter { $0.id != target.id }
+        }
+        pool.shuffle()
+        let distractors = Array(pool.prefix(3))
+        options = (distractors + [target]).shuffled()
+    }
+
+    private func evaluate(selected: Chord) {
+        showResult = true
+        isCorrect = (selected.id == target.id)
+        feedback = isCorrect ? "Correct — nice work!" : "Not quite. The correct chord is \(target.name)."
+    }
+
+    private func reset() {
+        selectedID = nil
+        showResult = false
+        isCorrect = false
+        feedback = ""
+        buildOptions()
+    }
+}
+
+// File: /GuitarTutorApp/Views/SupportingViews.swift
+import SwiftUI
+
+// Small reusable UI components can go here as the app grows.
+// Keep this file for expansion (e.g., badges, stats, lesson progress tiles).
+
+// File: /GuitarTutorApp/SupportingFiles/README.md
+/*
+README / Notes:
+- Add chord images to Assets.xcassets with the names from SampleData:
+  "C_major", "G_major", "D_major", "E_minor", "A_minor", "F_major", "B_minor", "Cmaj7"
+- iOS target: iOS 16.0+ recommended (NavigationStack used).
+- This prototype omits audio/strum detection as requested.
+- Extensibility ideas (future):
+  • Spaced repetition scheduling for lessons.
+  • Multi-slide lessons (diagram, finger positions, GIFs).
+  • Add short video/gif demos (local or remote).
+  • Add user profiles and sync (CloudKit).
+- To run:
+  1. Create a new SwiftUI App in Xcode.
+  2. Replace the app and view files with the above code (or paste into new files).
+  3. Add images to Assets.xcassets using the names above.
+  4. Build & run in the simulator or on device.
+*/
