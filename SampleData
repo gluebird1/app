@@ -1,0 +1,71 @@
+// File: SampleData.swift
+import Foundation
+
+/// Sample lessons used to populate the app.
+enum SampleData {
+    static let lessons: [Chord] = [
+        Chord(
+            name: "C Major",
+            type: "Major",
+            imageName: "C_major",
+            tips: "Curve your index finger, press firmly behind the fret. Strum all strings except low E.",
+            difficulty: .beginner
+        ),
+
+        Chord(
+            name: "G Major",
+            type: "Major",
+            imageName: "G_major",
+            tips: "Place ring finger on low E 3rd fret. Keep fingers arched.",
+            difficulty: .beginner
+        ),
+
+        Chord(
+            name: "D Major",
+            type: "Major",
+            imageName: "D_major",
+            tips: "Only strum the bottom four strings. Keep the fingers close to the frets.",
+            difficulty: .beginner
+        ),
+
+        Chord(
+            name: "E Minor",
+            type: "Minor",
+            imageName: "E_minor",
+            tips: "Two fingers on 2nd fret — great first minor chord.",
+            difficulty: .beginner
+        ),
+
+        Chord(
+            name: "A Minor",
+            type: "Minor",
+            imageName: "A_minor",
+            tips: "Relax the wrist and keep fingertips vertical.",
+            difficulty: .intermediate
+        ),
+
+        Chord(
+            name: "F Major (partial barre)",
+            type: "Barre/Major",
+            imageName: "F_major",
+            tips: "Start with partial barre and build finger strength.",
+            difficulty: .intermediate
+        ),
+
+        Chord(
+            name: "B Minor (barre)",
+            type: "Minor (barre)",
+            imageName: "B_minor",
+            tips: "Full barre on 2nd fret using index; shape the rest like A minor.",
+            difficulty: .advanced
+        ),
+
+        Chord(
+            name: "Cmaj7",
+            type: "Major 7th",
+            imageName: "Cmaj7",
+            tips: "A subtle, jazzier voicing; let the high E ring clearly.",
+            difficulty: .advanced
+        )
+    ]
+}
