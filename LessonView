@@ -1,0 +1,72 @@
+import SwiftUI
+
+struct LessonView: View {
+    @EnvironmentObject var store: AppStore
+    let chord: Chord
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+
+                // Chord image
+                Image(chord.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 320)
+                    .cornerRadius(12)
+                    .shadow(radius: 4)
+                    .padding(.horizontal)
+
+                // Text details
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(chord.name)
+                        .font(.largeTitle)
+                        .bold()
+
+                    Text(chord.type)
+                        .font(.title3)
+                        .foregroundColor(.secondary)
+
+                    Divider()
+
+                    Text("How to play")
+                        .font(.headline)
+
+                    Text(chord.tips)
+
+                    verticalSpace(8)
+
+                    Text("Practice steps")
+                        .font(.headline)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("• Place fingers exactly on the frets; press firmly.")
+                        Text("• Pluck each string slowly to ensure each note rings clearly.")
+                        Text("• For barre chords, start with partial shapes and build strength.")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                }
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding(.vertical)
+        }
+        .navigationTitle(chord.name)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if store.isCompleted(chord) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundColor(.green)
+                }
+            }
+        }
+    }
+}
+
+// Helper spacing view
+@ViewBuilder
+private func verticalSpace(_ height: CGFloat) -> some View {
+    Spacer().frame(height: height)
+}
