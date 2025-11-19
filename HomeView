@@ -1,0 +1,142 @@
+import SwiftUI
+
+struct HomeView: View {
+    @EnvironmentObject var store: AppStore
+
+    // We only track the current quiz chord.
+    // When this is non-nil, the sheet appears.
+    @State private var quizChord: Chord?
+
+    var body: some View {
+        VStack(spacing: 0) {
+
+            // Progress bar at the top
+            ProgressHeader()
+                .padding(.bottom, 6)
+
+            // List of lessons grouped by difficulty (Lesson 1, 2, 3)
+            List {
+                ForEach(Difficulty.allCases.sorted(), id: \.self) { level in
+                    let items = store.lessons.filter { $0.difficulty == level }
+
+                    if !items.isEmpty {
+                        Section(
+                            header: Text(level.lessonTitle) // <- uses lessonTitle
+                                .font(.headline)
+                        ) {
+                            ForEach(items) { chord in
+                                NavigationLink(value: chord) {
+                                    LessonRow(chord: chord)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+
+            // Final quiz button at the bottom
+            Button(action: startFinalQuiz) {
+                Text("Take Final Quiz")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+            }
+            .buttonStyle(.borderedProminent)
+            .padding()
+        }
+        .navigationTitle("GuitarTutor")
+        .navigationDestination(for: Chord.self) { chord in
+            LessonView(chord: chord)
+        }
+        // Present quiz when quizChord is non-nil
+        .sheet(item: $quizChord) { chord in
+            QuizView(target: chord)
+                .environmentObject(store)
+        }
+    }
+
+    // MARK: - Actions
+
+    /// Pick a random chord from all lessons and start the quiz.
+    private func startFinalQuiz() {
+        guard let randomChord = store.lessons.randomElement() else { return }
+        quizChord = randomChord      // setting this triggers the sheet
+    }
+}
+
+// MARK: - Progress Header
+
+struct ProgressHeader: View {
+    @EnvironmentObject var store: AppStore
+
+    var body: some View {
+        let completed = store.lessons.filter { store.isCompleted($0) }.count
+        let total = store.lessons.count
+
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Progress")
+                        .font(.headline)
+
+                    Text("\(completed) of \(total) lessons completed")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text("\(Int(total == 0 ? 0 : (Double(completed) / Double(total) * 100)))%")
+                    .font(.title3)
+                    .bold()
+            }
+
+            ProgressView(value: total == 0 ? 0 : Double(completed) / Double(total))
+                .scaleEffect(x: 1, y: 1.5)
+        }
+        .padding(.horizontal)
+        .padding(.top)
+    }
+}
+
+// MARK: - Lesson Row
+
+struct LessonRow: View {
+    @EnvironmentObject var store: AppStore
+    let chord: Chord
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(chord.imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 56, height: 56)
+                .clipped()
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(UIColor.separator))
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(chord.name)
+                    .font(.headline)
+
+                Text(chord.type)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            if store.isCompleted(chord) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+            } else {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 6)
+    }
+}
