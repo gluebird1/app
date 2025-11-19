@@ -1,0 +1,54 @@
+import Foundation
+import SwiftUI
+import Combine
+
+final class AppStore: ObservableObject {
+
+    // All chord lessons in the app
+    @Published var lessons: [Chord] = []
+
+    // Keeps track of which lessons the user has completed
+    @Published private(set) var completedIDs: Set<UUID> = []
+
+    private let saveKey = "com.guitartutor.completed.v1"
+
+    // Initialize the store with lessons
+    init(lessons: [Chord]) {
+        self.lessons = lessons
+        load()
+    }
+
+    // MARK: - Completion Logic
+
+    func isCompleted(_ chord: Chord) -> Bool {
+        completedIDs.contains(chord.id)
+    }
+
+    func markCompleted(_ chord: Chord) {
+        completedIDs.insert(chord.id)
+        save()
+    }
+
+    func unmarkCompleted(_ chord: Chord) {
+        completedIDs.remove(chord.id)
+        save()
+    }
+
+    // MARK: - Persistence (UserDefaults)
+
+    private func save() {
+        let array = completedIDs.map { $0.uuidString }
+        UserDefaults.standard.set(array, forKey: saveKey)
+    }
+
+    private func load() {
+        guard let array = UserDefaults.standard.stringArray(forKey: saveKey) else { return }
+        completedIDs = Set(array.compactMap { UUID(uuidString: $0) })
+    }
+
+    // MARK: - Sample Store for previews / app startup
+
+    static func sample() -> AppStore {
+        AppStore(lessons: SampleData.lessons)
+    }
+}
