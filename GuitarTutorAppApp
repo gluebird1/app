@@ -1,0 +1,16 @@
+import SwiftUI
+
+@main
+struct GuitarTutorAppApp: App {
+    @StateObject private var store = AppStore.sample()
+
+    var body: some Scene {
+        WindowGroup {
+            NavigationStack {
+                ContentView()   // <- starts at ContentView
+            }
+            .environmentObject(store) // <- inject store here
+        }
+    }
+}
+
