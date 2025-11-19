@@ -1,0 +1,27 @@
+import SwiftUI
+
+/// Place small reusable UI components here as your app grows.
+/// For example: badges, stat tiles, custom buttons, etc.
+
+struct TagBadge: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.caption)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.blue.opacity(0.15))
+            .foregroundColor(.blue)
+            .clipShape(Capsule())
+    }
+}
+
+#Preview {
+    VStack(spacing: 12) {
+        TagBadge(text: "Beginner")
+        TagBadge(text: "Barre Chord")
+    }
+    .padding()
+}
+
