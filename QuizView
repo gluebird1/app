@@ -1,0 +1,141 @@
+import SwiftUI
+
+struct QuizView: View {
+    @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let target: Chord   // the chord being quizzed
+
+    @State private var options: [Chord] = []
+    @State private var selectedID: UUID?
+    @State private var showResult = false
+    @State private var isCorrect = false
+    @State private var feedback = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+
+                // Question
+                Text("Which chord is shown?")
+                    .font(.title2)
+                    .bold()
+                    .padding(.top)
+
+                // Image to identify
+                Image(target.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 220)
+                    .cornerRadius(8)
+                    .shadow(radius: 3)
+
+                // Multiple-choice buttons
+                VStack(spacing: 12) {
+                    ForEach(options) { opt in
+                        Button {
+                            guard !showResult else { return }
+                            selectedID = opt.id
+                            evaluate(selected: opt)
+                        } label: {
+                            HStack {
+                                Text(opt.name).bold()
+                                Spacer()
+
+                                // Display result icons
+                                if selectedID == opt.id && showResult {
+                                    Image(systemName: isCorrect && opt.id == target.id
+                                          ? "checkmark.seal.fill"
+                                          : "xmark.circle.fill")
+                                        .foregroundColor(
+                                            isCorrect && opt.id == target.id ? .green : .red
+                                        )
+                                } else if selectedID == opt.id {
+                                    Image(systemName: "checkmark.circle")
+                                }
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(8)
+                        }
+                        .disabled(showResult)
+                    }
+                }
+                .padding(.horizontal)
+
+                // Feedback section
+                if showResult {
+                    Text(feedback)
+                        .font(.headline)
+                        .foregroundColor(isCorrect ? .green : .red)
+                        .padding(.top)
+
+                    if isCorrect {
+                        Button("Mark Lesson Complete & Close") {
+                            store.markCompleted(target)
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top)
+                    } else {
+                        HStack(spacing: 12) {
+                            Button("Try Again") {
+                                reset()
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button("Show Answer & Close") {
+                                dismiss()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding(.top)
+                    }
+                }
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Quiz")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Close") { dismiss() }
+                }
+            }
+            .onAppear { buildOptions() }
+        }
+    }
+
+    // MARK: - Logic
+
+    private func buildOptions() {
+        // Prefer distractors of the same difficulty
+        var pool = store.lessons.filter { $0.id != target.id && $0.difficulty == target.difficulty }
+
+        // If not enough, pull from any difficulty
+        if pool.count < 3 {
+            pool = store.lessons.filter { $0.id != target.id }
+        }
+
+        pool.shuffle()
+
+        let distractors = Array(pool.prefix(3))
+        options = (distractors + [target]).shuffled()
+    }
+
+    private func evaluate(selected: Chord) {
+        showResult = true
+        isCorrect = (selected.id == target.id)
+        feedback = isCorrect
+            ? "Correct — nice work!"
+            : "Not quite. The correct chord is \(target.name)."
+    }
+
+    private func reset() {
+        selectedID = nil
+        showResult = false
+        isCorrect = false
+        feedback = ""
+        buildOptions()
+    }
+}
