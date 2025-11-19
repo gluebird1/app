@@ -1,0 +1,34 @@
+import Foundation
+
+/// Difficulty level for a chord lesson.
+enum Difficulty: String, Codable, CaseIterable, Comparable, Hashable {
+    case beginner
+    case intermediate
+    case advanced
+
+    var displayName: String {
+        switch self {
+        case .beginner: return "Beginner"
+        case .intermediate: return "Intermediate"
+        case .advanced: return "Advanced"
+        }
+    }
+
+    /// Title to show in the UI as lesson sections.
+    var lessonTitle: String {
+        switch self {
+        case .beginner:
+            return "Lesson 1: Easy Chords"
+        case .intermediate:
+            return "Lesson 2: Intermediate Chords"
+        case .advanced:
+            return "Lesson 3: Challenging Chords"
+        }
+    }
+
+    // Allows sorting as beginner < intermediate < advanced
+    static func < (lhs: Difficulty, rhs: Difficulty) -> Bool {
+        let order: [Difficulty] = [.beginner, .intermediate, .advanced]
+        return order.firstIndex(of: lhs)! < order.firstIndex(of: rhs)!
+    }
+}
