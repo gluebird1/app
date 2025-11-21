@@ -8,7 +8,7 @@ enum SampleData {
             name: "C Major",
             type: "Major",
             imageName: "C_major",
-            tips: "Curve your index finger, press firmly behind the fret. Strum all strings except low E.",
+            tips: "Place your index finger on the 1st fret of the B string, your middle finger on the 2nd fret of the D string, and your ring finger on the 3rd fret of the A string. Do not play the low E string. Strum from the A string down to the thin E string..",
             difficulty: .beginner
         ),
 
@@ -16,7 +16,7 @@ enum SampleData {
             name: "G Major",
             type: "Major",
             imageName: "G_major",
-            tips: "Place ring finger on low E 3rd fret. Keep fingers arched.",
+            tips: "Place your middle finger on the 3rd fret of the low E string, your index finger on the 2nd fret of the A string, and your ring finger on the 3rd fret of the high E string, then strum all six strings.",
             difficulty: .beginner
         ),
 
@@ -24,7 +24,7 @@ enum SampleData {
             name: "D Major",
             type: "Major",
             imageName: "D_major",
-            tips: "Only strum the bottom four strings. Keep the fingers close to the frets.",
+            tips: "Place your index finger on the 2nd fret of the G string, your ring finger on the 3rd fret of the B string, and your middle finger on the 2nd fret of the high E string, then strum from the D string down and avoid playing the low E and A strings.",
             difficulty: .beginner
         ),
 
@@ -32,7 +32,7 @@ enum SampleData {
             name: "E Minor",
             type: "Minor",
             imageName: "E_minor",
-            tips: "Two fingers on 2nd fret — great first minor chord.",
+            tips: "Place your index finger 1st fret of the A string and your middle finger on the 2nd fret of the A string, and your ring finger on the second fret of the D string, then strum all six strings.",
             difficulty: .beginner
         ),
 
@@ -40,7 +40,7 @@ enum SampleData {
             name: "A Minor",
             type: "Minor",
             imageName: "A_minor",
-            tips: "Relax the wrist and keep fingertips vertical.",
+            tips: "Place your index finger on the 1st fret of the B string, your middle finger on the 2nd fret of the D string, and your ring finger on the 2nd fret of G string, then strum from the A string down and avoid playing the low E string.",
             difficulty: .intermediate
         ),
 
@@ -48,7 +48,7 @@ enum SampleData {
             name: "F Major (partial barre)",
             type: "Barre/Major",
             imageName: "F_major",
-            tips: "Start with partial barre and build finger strength.",
+            tips: "place your finger across the 1st fret of the B and high E strings, your middle finger on the 2nd fret of the G string, and your ring finger on the 3rd fret of the D string, then strum from the D string down and avoid playing the low E and A strings.",
             difficulty: .intermediate
         ),
 
@@ -56,7 +56,7 @@ enum SampleData {
             name: "B Minor (barre)",
             type: "Minor (barre)",
             imageName: "B_minor",
-            tips: "Full barre on 2nd fret using index; shape the rest like A minor.",
+            tips: "Place your index finger across all strings from the A string down to the 2nd fret, your ring finger on the 4th fret of the D string, your pinky on the 4th fret of the G string, and your middle finger on the 3rd fret of the B string, then strum from the A string down and avoid playing the low E stringr.",
             difficulty: .advanced
         ),
 
@@ -64,7 +64,7 @@ enum SampleData {
             name: "Cmaj7",
             type: "Major 7th",
             imageName: "Cmaj7",
-            tips: "A subtle, jazzier voicing; let the high E ring clearly.",
+            tips: "Place your index finger on the 1st fret of the B string, your middle finger on the 2nd fret of the D string, leave the G, B, and high E strings open, then strum from the A string down and avoid playing the low E string..",
             difficulty: .advanced
         )
     ]
